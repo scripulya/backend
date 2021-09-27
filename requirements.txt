@@ -1,0 +1,8 @@
+fastapi
+geoalchemy2
+python-dotenv
+shapely
+sqlalchemy
+alembic
+asyncpg
+psycopg2-binary
