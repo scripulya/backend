@@ -1,7 +1,7 @@
+import json
+
 from fastapi import FastAPI
-from geoalchemy2.shape import to_shape
-from geoalchemy2.elements import WKTElement
-from shapely.geometry import mapping
+from geojson import FeatureCollection, Feature, Point
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm.session import sessionmaker
@@ -30,17 +30,15 @@ async def get_locations():
     async with async_session() as session:
         points = select(
             RentalProperty.address,
-            RentalProperty.coords.ST_AsText().label("coords"))
+            RentalProperty.coords.ST_AsGeoJSON().label("coords"))
         result = await session.execute(points)
-        for prop in result:
-            coords = str(prop['coords'])
-            if coords == 'None':
+        for address, coords in result:
+            if coords is None:
                 continue
-            coords = mapping(to_shape(WKTElement(coords)))
-
-            message.append({
-                'address': prop['address'],
-                'coords': coords
-            })
-
+            coords = json.loads(coords)
+            coords = coords['coordinates']
+            point = Point(coords)
+            feature = Feature(geometry=point, properties={"address": address})
+            message.append(feature)
+    message = FeatureCollection(message)
     return message
