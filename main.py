@@ -1,36 +1,38 @@
+from constants import ESTONIA_BBOX
 import json
+from typing import List
 
 from fastapi import FastAPI
+from fastapi.params import Query
 from geojson import FeatureCollection, Feature, Point
 from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm.session import sessionmaker
+from sqlalchemy import func
 
 from core.models import RentalProperty
-from credentials import DATABASE_CREDENTIALS
+from setup import async_session
 
 app = FastAPI()
 
-user = DATABASE_CREDENTIALS['user']
-host = DATABASE_CREDENTIALS['host']
-password = DATABASE_CREDENTIALS['password']
-port = DATABASE_CREDENTIALS['port']
-database = DATABASE_CREDENTIALS['database']
 
-db_uri = f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{database}"
-engine = create_async_engine(db_uri, echo=True, future=True)
-async_session = sessionmaker(
-    engine, expire_on_commit=False, class_=AsyncSession
-)
+def get_geojson_points_by_bbox(bbox: list):
+    points = select(
+        RentalProperty.address,
+        RentalProperty.coords)\
+            .cte("rental_coords")
+    points = select(
+        points.c.address,
+        points.c.coords.ST_AsGeoJSON().label("coords"))\
+        .where(
+            points.c.coords.ST_Intersects(
+                func.ST_MakeEnvelope(*bbox, 4326)))
+    return points
 
 
-@app.get('/get_locations')
-async def get_locations():
+@app.get('/get_locations/')
+async def get_locations(bbox: List[float] = Query(ESTONIA_BBOX)):
     message = []
     async with async_session() as session:
-        points = select(
-            RentalProperty.address,
-            RentalProperty.coords.ST_AsGeoJSON().label("coords"))
+        points = get_geojson_points_by_bbox(bbox)
         result = await session.execute(points)
         for address, coords in result:
             if coords is None:

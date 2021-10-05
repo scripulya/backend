@@ -11,3 +11,10 @@ class RentalProperty(Base):
     address = Column(String)
     price = Column(Integer)
     coords = Column(Geometry('POINT'))
+
+
+class Municipality(Base):
+    __tablename__ = 'municipality'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    geom = Column(Geometry('POLYGON'))
