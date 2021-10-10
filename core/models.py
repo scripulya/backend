@@ -9,8 +9,9 @@ class RentalProperty(Base):
     __tablename__ = 'real_estates'
     id = Column(Integer, primary_key=True)
     address = Column(String)
-    price = Column(Integer)
+    price = Column(String)
     coords = Column(Geometry('POINT'))
+    resource_link = Column(String)
 
 
 class Municipality(Base):

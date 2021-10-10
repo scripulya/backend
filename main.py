@@ -17,9 +17,13 @@ app = FastAPI()
 def get_geojson_points_by_bbox(bbox: list):
     points = select(
         RentalProperty.address,
+        RentalProperty.resource_link,
+        RentalProperty.price,
         RentalProperty.coords)\
             .cte("rental_coords")
     points = select(
+        points.c.resource_link,
+        points.c.price,
         points.c.address,
         points.c.coords.ST_AsGeoJSON().label("coords"))\
         .where(
@@ -34,13 +38,19 @@ async def get_locations(bbox: List[float] = Query(ESTONIA_BBOX)):
     async with async_session() as session:
         points = get_geojson_points_by_bbox(bbox)
         result = await session.execute(points)
-        for address, coords in result:
+        for resource_link, price, address, coords in result:
             if coords is None:
                 continue
             coords = json.loads(coords)
             coords = coords['coordinates']
             point = Point(coords)
-            feature = Feature(geometry=point, properties={"address": address})
+
+            properties = {
+                "address": address,
+                "price": price,
+                "resource_link": resource_link
+            }
+            feature = Feature(geometry=point, properties=properties)
             message.append(feature)
     message = FeatureCollection(message)
     return message
