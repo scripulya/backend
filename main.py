@@ -4,6 +4,7 @@ from typing import List
 
 from fastapi import FastAPI
 from fastapi.params import Query
+from fastapi.middleware.cors import CORSMiddleware
 from geojson import FeatureCollection, Feature, Point
 from sqlalchemy.future import select
 from sqlalchemy import func
@@ -12,6 +13,16 @@ from core.models import RentalProperty
 from setup import async_session
 
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_geojson_points_by_bbox(bbox: list):
