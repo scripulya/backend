@@ -18,4 +18,4 @@ class Municipality(Base):
     __tablename__ = 'municipality'
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    geom = Column(Geometry('POLYGON'))
+    geom = Column(Geometry('MULTIPOLYGON'))

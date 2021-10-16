@@ -25,7 +25,7 @@ def upgrade():
     sa.Column(
         'geom',
         geoalchemy2.types.Geometry(
-            geometry_type='POLYGON',
+            geometry_type='MULTIPOLYGON',
             from_text='ST_GeomFromEWKT',
             name='geometry'), nullable=True),
     sa.PrimaryKeyConstraint('id')
